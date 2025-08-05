@@ -11,109 +11,124 @@
   <link rel="apple-touch-icon" href="icons/icon-180.png">
 
   <style>
-    :root{
-      --bg:#0f172a; --text:#f5f5f5; --muted:#cbd5e1; --border:rgba(255,255,255,.14);
-      --j:#ec4899; --s:#8b5cf6;
-      --card:rgba(17,24,39,.82); --glass:rgba(255,255,255,.06);
-      --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      background:var(--bg);position:relative;overflow-y:scroll;touch-action:pan-y;
-    }
-    /* 背景图（粉色） */
-    body::before{
-      content:"";position:fixed;inset:0;
-      background:
-        linear-gradient(180deg, rgba(236,72,153,.25), rgba(139,92,246,.25)),
-        url("icons/fond.jpg") center/cover no-repeat fixed;
-      filter:saturate(1.05);opacity:.55;z-index:-2;
-    }
-    body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.30));z-index:-1}
+  :root{
+    --bg:#0f172a; --text:#f5f5f5; --muted:#cbd5e1; --border:rgba(255,255,255,.14);
+    --j:#ec4899; --s:#8b5cf6;
+    --card:rgba(17,24,39,.82); --glass:rgba(255,255,255,.06);
+    --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px;
 
-    .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
+    /* nouveaux espacements */
+    --day-col-gap: 6px;     /* écart horizontal entre jours */
+    --week-row-gap: 14px;   /* écart vertical entre semaines */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    background:var(--bg);position:relative;overflow-y:scroll;touch-action:pan-y;
+  }
+  /* 背景图（粉色） */
+  body::before{
+    content:"";position:fixed;inset:0;
+    background:
+      linear-gradient(180deg, rgba(236,72,153,.25), rgba(139,92,246,.25)),
+      url("icons/fond.jpg") center/cover no-repeat fixed;
+    filter:saturate(1.05);opacity:.55;z-index:-2;
+  }
+  body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.30));z-index:-1}
 
-    .calendar{
-      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
-      box-shadow:var(--shadow); padding:12px;
-    }
-    .top-rows{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    .controls{display:flex;flex-wrap:wrap;gap:8px}
-    .legend{display:flex;align-items:center;gap:10px}
-    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
-    .dot{width:10px;height:10px;border-radius:999px}
-    .dot.j{background:var(--j)} .dot.s{background:var(--s)}
+  .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
 
-    .btn{
-      background:var(--glass); border:1px solid var(--border); color:var(--text);
-      border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); cursor:pointer
-    }
-    .btn.small{padding:8px 12px}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-    .btn:active{transform:translateY(1px)}
+  .calendar{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:12px;
+  }
+  .top-rows{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px}
+  .legend{display:flex;align-items:center;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
+  .dot{width:10px;height:10px;border-radius:999px}
+  .dot.j{background:var(--j)} .dot.s{background:var(--s)}
 
-    /* 月份标题（放在日期上方） */
-    .month-inline{
-      text-align:center;font-weight:800;font-size:18px;margin:2px 0 8px;
-      text-transform:none;
-    }
+  .btn{
+    background:var(--glass); border:1px solid var(--border); color:var(--text);
+    border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); cursor:pointer
+  }
+  .btn.small{padding:8px 12px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn:active{transform:translateY(1px)}
 
-    /* 星期标题（与下方网格对齐） */
-    .weekdays{
-      display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;
-      color:var(--muted);font-size:13px;font-weight:700;text-align:center;
-    }
+  /* 月份标题（放在日期上方） */
+  .month-inline{
+    text-align:center;font-weight:800;font-size:18px;margin:2px 0 8px;
+    text-transform:none;
+  }
 
-    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-    .cell{
-      aspect-ratio:1/1;background:var(--glass);border:1px solid var(--border);border-radius:14px;
-      display:flex;align-items:center;justify-content:center;position:relative;user-select:none;cursor:pointer;
-      transition:transform .05s ease, outline-color .2s, background-color .2s;outline:2px solid transparent;
-    }
-    .cell:active{ transform:scale(.985) }
-    .cell.out{ opacity:.45 }
-    .num{ position:relative; z-index:2; font-weight:700; }
-    .badge{ position:absolute; inset:4px; border-radius:12px; background:transparent; z-index:1; transition:background-color .2s, box-shadow .2s }
-    .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
-    .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
+  /* 星期标题（与下方网格对齐） — écart H seulement */
+  .weekdays{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    column-gap: var(--day-col-gap);
+    margin:6px 0 10px;
+    color:var(--muted);font-size:13px;font-weight:700;text-align:center;
+  }
 
-    /* 底部栏：导航固定位置，高度更大 */
-    .footer{
-      position:fixed;left:0;right:0;bottom:0;
-      padding:14px 12px;min-height:84px;border-top:1px solid var(--border);
-      backdrop-filter:blur(8px);
-      background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
-      display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
-    }
-    .nav-group{
-      display:grid;grid-template-columns:56px minmax(180px, 60vw) 56px;align-items:center;justify-items:center;
-      justify-self:center;
-    }
-    .month-btn{
-      width:100%;margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:800;cursor:pointer;
-      padding:6px 10px;border-radius:10px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
-    }
-    .month-btn:hover{background:rgba(255,255,255,.06)}
-    .month-btn:active{transform:translateY(1px)}
-    .install{justify-self:end}
+  /* Grille jours — écart H + espace V entre semaines */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    column-gap: var(--day-col-gap);
+    row-gap: var(--week-row-gap);
+  }
 
-    dialog#monthPicker{
-      border:none;border-radius:16px;padding:0;max-width:min(440px,96vw);width:100%;
-      background:var(--card);color:var(--text);box-shadow:var(--shadow);overflow:hidden;
-    }
-    dialog#monthPicker::backdrop{background:rgba(0,0,0,.6)}
-    .mp-head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)}
-    .mp-title{font-weight:700}
-    .mp-list{max-height:60vh;overflow:auto}
-    .mp-item{
-      width:100%;text-align:left;background:transparent;border:none;color:var(--text);
-      padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;
-    }
-    .mp-item:hover{background:rgba(255,255,255,.06)}
-    .mp-item.selected{outline:2px solid rgba(236,72,153,.5); background:rgba(236,72,153,.10)}
-  </style>
+  .cell{
+    aspect-ratio:1/1;background:var(--glass);border:1px solid var(--border);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;position:relative;user-select:none;cursor:pointer;
+    transition:transform .05s ease, outline-color .2s, background-color .2s;outline:2px solid transparent;
+  }
+  .cell:active{ transform:scale(.985) }
+  .cell.out{ opacity:.45 }
+  .num{ position:relative; z-index:2; font-weight:700; }
+  .badge{ position:absolute; inset:4px; border-radius:12px; background:transparent; z-index:1; transition:background-color .2s, box-shadow .2s }
+  .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
+  .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
+
+  /* 底部栏：导航固定位置，高度更大 */
+  .footer{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:14px 12px;min-height:84px;border-top:1px solid var(--border);
+    backdrop-filter:blur(8px);
+    background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
+  }
+  .nav-group{
+    display:grid;grid-template-columns:56px minmax(180px, 60vw) 56px;align-items:center;justify-items:center;
+    justify-self:center;
+  }
+  .month-btn{
+    width:100%;margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:800;cursor:pointer;
+    padding:6px 10px;border-radius:10px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+  }
+  .month-btn:hover{background:rgba(255,255,255,.06)}
+  .month-btn:active{transform:translateY(1px)}
+  .install{justify-self:end}
+
+  dialog#monthPicker{
+    border:none;border-radius:16px;padding:0;max-width:min(440px,96vw);width:100%;
+    background:var(--card);color:var(--text);box-shadow:var(--shadow);overflow:hidden;
+  }
+  dialog#monthPicker::backdrop{background:rgba(0,0,0,.6)}
+  .mp-head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)}
+  .mp-title{font-weight:700}
+  .mp-list{max-height:60vh;overflow:auto}
+  .mp-item{
+    width:100%;text-align:left;background:transparent;border:none;color:var(--text);
+    padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;
+  }
+  .mp-item:hover{background:rgba(255,255,255,.06)}
+  .mp-item.selected{outline:2px solid rgba(236,72,153,.5); background:rgba(236,72,153,.10)}
+</style>
+
 </head>
 <body>
 
