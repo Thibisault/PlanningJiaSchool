@@ -23,6 +23,7 @@
       margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       background:var(--bg);position:relative;overflow-y:scroll;
     }
+    /* Fond d’écran (rose) atténué */
     body::before{
       content:"";position:fixed;inset:0;
       background:
@@ -32,13 +33,24 @@
     }
     body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.30));z-index:-1}
 
-    header{
-      position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
-      background:linear-gradient(180deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
-      border-bottom:1px solid var(--border); padding:10px 12px;
+    /* Conteneur central */
+    .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
+
+    /* Carte calendrier */
+    .calendar{
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:12px;
+      touch-action:pan-y; /* pour swiper horizontalement sans bloquer le scroll vertical */
     }
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .month-nav{display:flex;align-items:center;gap:8px}
+    .top-rows{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px
+    }
+    .controls{display:flex;flex-wrap:wrap;gap:8px}
+    .legend{display:flex;align-items:center;gap:10px}
+    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
+    .dot{width:10px;height:10px;border-radius:999px}
+    .dot.j{background:var(--j)} .dot.s{background:var(--s)}
+
     .btn{
       background:var(--glass); border:1px solid var(--border); color:var(--text);
       border-radius:12px; padding:8px 12px; box-shadow:var(--shadow); cursor:pointer
@@ -46,25 +58,8 @@
     .btn.small{padding:6px 10px}
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .btn:active{transform:translateY(1px)}
-    .legend{display:flex;align-items:center;gap:10px}
-    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
-    .dot{width:10px;height:10px;border-radius:999px}
-    .dot.j{background:var(--j)} .dot.s{background:var(--s)}
 
-    /* Bouton mois cliquable */
-    .month-btn{
-      margin:0;border:none;background:transparent;color:var(--text);font-size:20px;font-weight:700;cursor:pointer;
-      padding:4px 10px;border-radius:10px;line-height:1;
-    }
-    .month-btn:hover{background:rgba(255,255,255,.06)}
-    .month-btn:active{transform:translateY(1px)}
-
-    .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
-
-    .calendar{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px;}
-    .cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-    .cal-title{font-weight:700;font-size:18px}
-
+    /* En-têtes des jours (centrés + noms complets) */
     .weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;color:var(--muted);font-size:13px;font-weight:600;text-align:center;text-transform:capitalize}
     .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
     .cell{
@@ -79,9 +74,21 @@
     .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
     .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
 
-    .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+    /* BARRE DU BAS = navigation centrée */
+    .footer{
+      position:fixed;left:0;right:0;bottom:0;padding:10px;border-top:1px solid var(--border);
+      backdrop-filter:blur(8px);background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
+      display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
+    }
+    .nav-group{display:flex;align-items:center;gap:8px;justify-self:center}
+    .month-btn{
+      margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;
+      padding:4px 10px;border-radius:10px;line-height:1;text-transform:capitalize;
+    }
+    .month-btn:hover{background:rgba(255,255,255,.06)}
+    .month-btn:active{transform:translateY(1px)}
+    .install{justify-self:end}
 
-    /* Picker de mois (dialog) */
     dialog#monthPicker{
       border:none;border-radius:16px;padding:0;max-width:min(440px,96vw);width:100%;
       background:var(--card);color:var(--text);box-shadow:var(--shadow);overflow:hidden;
@@ -99,27 +106,17 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="toolbar">
-      <div class="month-nav">
-        <button class="btn small" id="prevMonth" aria-label="Mois précédent">◀</button>
-        <button class="month-btn" id="monthLabel" aria-haspopup="dialog" aria-controls="monthPicker" title="Choisir un mois"></button>
-        <button class="btn small" id="nextMonth" aria-label="Mois suivant">▶</button>
-      </div>
-      <div class="legend">
-        <span class="chip"><span class="dot j"></span>Jiajia</span>
-        <span class="chip"><span class="dot s"></span>Sœur</span>
-      </div>
-    </div>
-  </header>
 
   <div class="container">
-    <div class="calendar">
-      <div class="cal-head">
-        <div class="cal-title" id="calTitle"></div>
+    <div class="calendar" id="calendar">
+      <div class="top-rows">
         <div class="controls">
           <button class="btn" id="invertAB">Inverser A/B (réinitialise)</button>
           <button class="btn" id="resetBtn">Réinitialiser modifs</button>
+        </div>
+        <div class="legend">
+          <span class="chip"><span class="dot j"></span>Jiajia</span>
+          <span class="chip"><span class="dot s"></span>Sœur</span>
         </div>
       </div>
 
@@ -137,9 +134,15 @@
     <div class="mp-list" id="mpList"></div>
   </dialog>
 
-  <div class="footer" style="position:fixed;left:0;right:0;bottom:0;padding:10px;display:flex;gap:8px;justify-content:center;border-top:1px solid var(--border);backdrop-filter:blur(8px);background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70))">
-    <button class="btn" id="todayBtn">Aller au mois courant</button>
-    <button class="btn" id="installBtn" hidden>Installer</button>
+  <!-- Barre du bas : nav centrée -->
+  <div class="footer">
+    <div></div>
+    <div class="nav-group">
+      <button class="btn small" id="prevMonth" aria-label="Mois précédent">◀</button>
+      <button class="month-btn" id="monthLabel" aria-haspopup="dialog" aria-controls="monthPicker" title="Choisir un mois"></button>
+      <button class="btn small" id="nextMonth" aria-label="Mois suivant">▶</button>
+    </div>
+    <button class="btn small install" id="installBtn" hidden>Installer</button>
   </div>
 
   <script>
@@ -154,7 +157,7 @@
   function weeksBetween(a,b){ return Math.round((mondayOf(b)-mondayOf(a))/(7*86400000)); }
 
   // ---------- State ----------
-  const STORAGE_KEY='garde-calendar.v4';
+  const STORAGE_KEY='garde-calendar.v5';
   const defaultState = ()=>{
     const today = new Date();
     return { baselineMondayISO: ymd(mondayOf(today)), baselineOwner: 'jiajia', dayOverrides: {} };
@@ -175,10 +178,10 @@
   }
 
   // ---------- Rendu du mois ----------
-  const monthLabelEl = document.getElementById('monthLabel');
-  const calTitle = document.getElementById('calTitle');
   const grid = document.getElementById('grid');
   const weekdaysEl = document.getElementById('weekdays');
+  const monthLabelEl = document.getElementById('monthLabel');
+  const calendarEl = document.getElementById('calendar');
 
   const dayNames = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
   weekdaysEl.innerHTML = dayNames.map(n=>`<div style="text-align:center">${n}</div>`).join('');
@@ -199,7 +202,6 @@
 
     const label = fmtMonth.format(m);
     monthLabelEl.textContent = label;
-    calTitle.textContent = label;
 
     // semaines nécessaires uniquement
     const firstMonday = mondayOf(monthStartUTC);
@@ -242,7 +244,6 @@
   // ---------- Navigation flèches ----------
   document.getElementById('prevMonth').onclick = ()=>{ if(currentOffset>0){ currentOffset--; render(); } };
   document.getElementById('nextMonth').onclick = ()=>{ if(currentOffset<monthsAhead){ currentOffset++; render(); } };
-  document.getElementById('todayBtn').onclick = ()=>{ currentOffset = 0; render(); };
 
   // ---------- Inverser / Reset ----------
   document.getElementById('invertAB').onclick = ()=>{
@@ -279,19 +280,45 @@
     const items = mpList.querySelectorAll('.mp-item');
     items.forEach(it => it.classList.toggle('selected', Number(it.dataset.offset)===currentOffset));
   }
-
-  // Ouvrir au clic sur le mois
   monthLabelEl.addEventListener('click', ()=>{
     buildMonthPicker();
     monthPicker.showModal();
   });
   mpClose.addEventListener('click', ()=> monthPicker.close());
   monthPicker.addEventListener('click', (e)=>{
-    // fermer si clic hors carte
     const rect = monthPicker.getBoundingClientRect();
     const inDialog = (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
     if(!inDialog) monthPicker.close();
   });
+
+  // ---------- Swipe (gauche/droite pour changer de mois) ----------
+  let touchStartX=null, touchStartY=null, touchStartTime=0;
+  const SWIPE_MIN_X = 50;   // px
+  const SWIPE_MAX_Y = 60;   // tolérance verticale
+  const SWIPE_MAX_MS = 600; // timing optionnel
+
+  function onTouchStart(e){
+    const t = e.touches ? e.touches[0] : e;
+    touchStartX = t.clientX; touchStartY = t.clientY; touchStartTime = Date.now();
+  }
+  function onTouchEnd(e){
+    if(touchStartX===null) return;
+    const t = e.changedTouches ? e.changedTouches[0] : e;
+    const dx = t.clientX - touchStartX;
+    const dy = Math.abs(t.clientY - touchStartY);
+    const dt = Date.now() - touchStartTime;
+    touchStartX = null;
+
+    if(dy > SWIPE_MAX_Y || dt > SWIPE_MAX_MS) return; // pas un swipe horizontal
+    if(dx <= -SWIPE_MIN_X && currentOffset < monthsAhead){ // vers la gauche => mois suivant
+      currentOffset++; render();
+    }else if(dx >= SWIPE_MIN_X && currentOffset > 0){      // vers la droite => mois précédent
+      currentOffset--; render();
+    }
+  }
+  // On capte les gestes sur la carte + sur le body (au cas où)
+  ['touchstart','pointerdown','mousedown'].forEach(ev=>calendarEl.addEventListener(ev, onTouchStart, {passive:true}));
+  ['touchend','pointerup','mouseup'].forEach(ev=>calendarEl.addEventListener(ev, onTouchEnd, {passive:true}));
 
   // ---------- PWA ----------
   let deferredPrompt=null;
