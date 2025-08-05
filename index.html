@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="fr">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Garde – Jiajia / Sœur</title>
+  <title>值班 – Jiajia / 姐姐</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -21,11 +21,9 @@
     html,body{height:100%}
     body{
       margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      background:var(--bg);position:relative;overflow-y:scroll;
-      /* permet les gestes globaux */
-      touch-action:pan-y;
+      background:var(--bg);position:relative;overflow-y:scroll;touch-action:pan-y;
     }
-    /* Fond d’écran (rose) atténué */
+    /* 背景图（粉色） */
     body::before{
       content:"";position:fixed;inset:0;
       background:
@@ -35,10 +33,8 @@
     }
     body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.30));z-index:-1}
 
-    /* Conteneur central */
     .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
 
-    /* Carte calendrier */
     .calendar{
       background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
       box-shadow:var(--shadow); padding:12px;
@@ -58,8 +54,18 @@
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .btn:active{transform:translateY(1px)}
 
-    /* En-têtes des jours (centrés + noms complets) */
-    .weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;color:var(--muted);font-size:13px;font-weight:600;text-align:center;text-transform:capitalize}
+    /* 月份标题（放在日期上方） */
+    .month-inline{
+      text-align:center;font-weight:800;font-size:18px;margin:2px 0 8px;
+      text-transform:none;
+    }
+
+    /* 星期标题（与下方网格对齐） */
+    .weekdays{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;
+      color:var(--muted);font-size:13px;font-weight:700;text-align:center;
+    }
+
     .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
     .cell{
       aspect-ratio:1/1;background:var(--glass);border:1px solid var(--border);border-radius:14px;
@@ -73,26 +79,21 @@
     .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
     .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
 
-    /* BARRE DU BAS = nav centrée, flèches fixes */
+    /* 底部栏：导航固定位置，高度更大 */
     .footer{
       position:fixed;left:0;right:0;bottom:0;
-      padding:14px 12px; /* plus haute */
-      min-height:84px;   /* hauteur augmentée */
-      border-top:1px solid var(--border);
+      padding:14px 12px;min-height:84px;border-top:1px solid var(--border);
       backdrop-filter:blur(8px);
       background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
       display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
     }
     .nav-group{
-      /* 3 colonnes : flèche gauche (fixe), libellé au centre (largeur bornée), flèche droite (fixe) */
       display:grid;grid-template-columns:56px minmax(180px, 60vw) 56px;align-items:center;justify-items:center;
       justify-self:center;
     }
     .month-btn{
-      width:100%;
-      margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;
-      padding:6px 10px;border-radius:10px;line-height:1;text-transform:capitalize;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+      width:100%;margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:800;cursor:pointer;
+      padding:6px 10px;border-radius:10px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
     }
     .month-btn:hover{background:rgba(255,255,255,.06)}
     .month-btn:active{transform:translateY(1px)}
@@ -120,43 +121,49 @@
     <div class="calendar" id="calendar">
       <div class="top-rows">
         <div class="controls">
-          <button class="btn" id="invertAB">Inverser A/B (réinitialise)</button>
-          <button class="btn" id="resetBtn">Réinitialiser modifs</button>
+          <button class="btn" id="invertAB">切换A/B（将重置）</button>
+          <button class="btn" id="resetBtn">重置手动修改</button>
         </div>
         <div class="legend">
           <span class="chip"><span class="dot j"></span>Jiajia</span>
-          <span class="chip"><span class="dot s"></span>Sœur</span>
+          <span class="chip"><span class="dot s"></span>姐姐</span>
         </div>
       </div>
 
+      <!-- 月份（中文） -->
+      <div class="month-inline" id="monthInline"></div>
+
+      <!-- 星期标题（与下面网格同样的7列布局，居中对齐） -->
       <div class="weekdays" id="weekdays"></div>
+
+      <!-- 日期 -->
       <div class="grid" id="grid"></div>
     </div>
   </div>
 
-  <!-- Picker de mois -->
+  <!-- 月份选择器 -->
   <dialog id="monthPicker">
     <div class="mp-head">
-      <div class="mp-title">Aller au mois…</div>
-      <button class="btn small" id="mpClose">Fermer</button>
+      <div class="mp-title">选择月份</div>
+      <button class="btn small" id="mpClose">关闭</button>
     </div>
     <div class="mp-list" id="mpList"></div>
   </dialog>
 
-  <!-- Barre du bas : nav centrée & flèches fixes -->
+  <!-- 底部栏：固定左右箭头 + 中间月份按钮 -->
   <div class="footer">
     <div></div>
     <div class="nav-group">
-      <button class="btn small" id="prevMonth" aria-label="Mois précédent">◀</button>
-      <button class="month-btn" id="monthLabel" aria-haspopup="dialog" aria-controls="monthPicker" title="Choisir un mois"></button>
-      <button class="btn small" id="nextMonth" aria-label="Mois suivant">▶</button>
+      <button class="btn small" id="prevMonth" aria-label="上个月">◀</button>
+      <button class="month-btn" id="monthLabel" aria-haspopup="dialog" aria-controls="monthPicker" title="选择月份"></button>
+      <button class="btn small" id="nextMonth" aria-label="下个月">▶</button>
     </div>
-    <button class="btn small install" id="installBtn" hidden>Installer</button>
+    <button class="btn small install" id="installBtn" hidden>安装</button>
   </div>
 
   <script>
-  // ---------- Dates (UTC) ----------
-  const fmtMonth = new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'});
+  // ---------- 日期（UTC） ----------
+  const fmtMonthZH = new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'long'}); // 例：2025年8月
   const toUTCDate = (d)=> new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const ymd = (d)=> `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   const fromYMD = (s)=>{ const [y,m,d]=s.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)); }
@@ -165,8 +172,8 @@
   function addDaysUTC(d,days){ const n=new Date(d); n.setUTCDate(n.getUTCDate()+days); return n; }
   function weeksBetween(a,b){ return Math.round((mondayOf(b)-mondayOf(a))/(7*86400000)); }
 
-  // ---------- State ----------
-  const STORAGE_KEY='garde-calendar.v6';
+  // ---------- 状态 ----------
+  const STORAGE_KEY='garde-calendar.v7';
   const defaultState = ()=>{
     const today = new Date();
     return { baselineMondayISO: ymd(mondayOf(today)), baselineOwner: 'jiajia', dayOverrides: {} };
@@ -179,41 +186,45 @@
     const base = fromYMD(state.baselineMondayISO);
     const w = weeksBetween(base, date);
     const isEven = (w % 2 === 0);
-    return isEven ? state.baselineOwner : (state.baselineOwner==='jiajia'?'soeur':'jiajia');
+    return isEven ? state.baselineOwner : (state.baselineOwner==='jiajia'?'soeur':'jiajia'); // 存值仍用 'soeur' 以兼容之前逻辑
   }
   function ownerForDate(date){
     const k = ymd(toUTCDate(date));
     return state.dayOverrides[k] || baseOwnerForDate(date);
   }
 
-  // ---------- Rendu du mois ----------
+  // ---------- 渲染月份 ----------
   const grid = document.getElementById('grid');
   const weekdaysEl = document.getElementById('weekdays');
   const monthLabelEl = document.getElementById('monthLabel');
+  const monthInlineEl = document.getElementById('monthInline');
 
-  const dayNames = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
-  weekdaysEl.innerHTML = dayNames.map(n=>`<div style="text-align:center">${n}</div>`).join('');
+  const dayNamesZH = ['周一','周二','周三','周四','周五','周六','周日']; // 与下方7列严格对齐
+  weekdaysEl.innerHTML = dayNamesZH.map(n=>`<div style="text-align:center">${n}</div>`).join('');
 
   const today = new Date();
-  const startMonth = new Date(today.getFullYear(), today.getMonth(), 1); // mois courant
+  const startMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 当前月
   const monthsAhead = 12; // 0..12
   let currentOffset = 0;
 
   function render(){
-    // borne navigation
+    // 导航可用性
     document.getElementById('prevMonth').disabled = currentOffset<=0;
     document.getElementById('nextMonth').disabled = currentOffset>=monthsAhead;
 
     const m = new Date(startMonth.getFullYear(), startMonth.getMonth()+currentOffset, 1);
     const monthStartUTC = toUTCDate(m);
     const monthEndUTC = toUTCDate(new Date(m.getFullYear(), m.getMonth()+1, 0));
+    const labelZH = fmtMonthZH.format(m);
 
-    monthLabelEl.textContent = fmtMonth.format(m);
+    // 底部按钮 & 中间标题（中文）
+    monthLabelEl.textContent = labelZH;
+    monthInlineEl.textContent = labelZH;
 
-    // semaines nécessaires uniquement
+    // 仅显示必要的周
     const firstMonday = mondayOf(monthStartUTC);
     const lastSunday  = sundayOf(monthEndUTC);
-    const totalDays = Math.round((lastSunday - firstMonday)/86400000) + 1; // multiple de 7
+    const totalDays = Math.round((lastSunday - firstMonday)/86400000) + 1; // 7的倍数
     grid.innerHTML='';
 
     for(let i=0;i<totalDays;i++){
@@ -221,7 +232,6 @@
       const cell = document.createElement('div');
       cell.className = 'cell';
 
-      // hors du mois ⇒ atténué
       const out = d < monthStartUTC || d > monthEndUTC;
       if(out) cell.classList.add('out');
 
@@ -232,6 +242,7 @@
       const num = document.createElement('div'); num.className='num'; num.textContent = d.getUTCDate();
       cell.appendChild(badge); cell.appendChild(num);
 
+      // 点击切换 Jiajia <-> 姐姐
       cell.addEventListener('click', ()=>{
         const k = ymd(d);
         const cur = ownerForDate(d);
@@ -247,22 +258,22 @@
     refreshMonthPickerSelection();
   }
 
-  // ---------- Navigation flèches ----------
+  // ---------- 箭头导航 ----------
   document.getElementById('prevMonth').onclick = ()=>{ if(currentOffset>0){ currentOffset--; render(); } };
   document.getElementById('nextMonth').onclick = ()=>{ if(currentOffset<monthsAhead){ currentOffset++; render(); } };
 
-  // ---------- Inverser / Reset ----------
+  // ---------- 全局切换 / 重置 ----------
   document.getElementById('invertAB').onclick = ()=>{
-    if(!confirm("Inverser l'alternance A/B et effacer toutes les modifications manuelles ?")) return;
+    if(!confirm("确定切换 A/B 并清除所有手动修改吗？")) return;
     state.baselineOwner = (state.baselineOwner==='jiajia') ? 'soeur' : 'jiajia';
     state.dayOverrides = {}; save(); render();
   };
   document.getElementById('resetBtn').onclick = ()=>{
-    if(!confirm("Effacer toutes les modifications manuelles (jours) ?")) return;
+    if(!confirm("确定清除所有手动修改吗？")) return;
     state.dayOverrides = {}; save(); render();
   };
 
-  // ---------- Picker de mois ----------
+  // ---------- 月份选择器 ----------
   const monthPicker = document.getElementById('monthPicker');
   const mpList = document.getElementById('mpList');
   const mpClose = document.getElementById('mpClose');
@@ -274,7 +285,7 @@
       const btn = document.createElement('button');
       btn.className = 'mp-item';
       btn.dataset.offset = i;
-      btn.textContent = fmtMonth.format(date);
+      btn.textContent = fmtMonthZH.format(date); // 中文
       btn.addEventListener('click', ()=>{
         currentOffset = i; monthPicker.close(); render();
       });
@@ -297,11 +308,11 @@
     if(!inDialog) monthPicker.close();
   });
 
-  // ---------- Swipe global (n'importe où sur l'écran) ----------
+  // ---------- 全局滑动（任意位置） ----------
   let startX=null, startY=null, startTime=0;
   const SWIPE_MIN_X = 50;   // px
-  const SWIPE_MAX_Y = 60;   // tolérance verticale
-  const SWIPE_MAX_MS = 600; // timing max
+  const SWIPE_MAX_Y = 60;   // 垂直容忍
+  const SWIPE_MAX_MS = 600; // 最大时间
 
   function handleStart(e){
     const t = e.touches ? e.touches[0] : e;
@@ -315,17 +326,15 @@
     const dt = Date.now() - startTime;
     startX = null;
 
-    // ignorer si le picker de mois est ouvert
-    if (document.getElementById('monthPicker').open) return;
+    if (document.getElementById('monthPicker').open) return; // 选择器打开时不处理滑动
+    if(dy > SWIPE_MAX_Y || dt > SWIPE_MAX_MS) return;
 
-    if(dy > SWIPE_MAX_Y || dt > SWIPE_MAX_MS) return; // pas un swipe horizontal
-    if(dx <= -SWIPE_MIN_X && currentOffset < monthsAhead){ // gauche -> suivant
+    if(dx <= -SWIPE_MIN_X && currentOffset < monthsAhead){
       currentOffset++; render();
-    }else if(dx >= SWIPE_MIN_X && currentOffset > 0){      // droite -> précédent
+    }else if(dx >= SWIPE_MIN_X && currentOffset > 0){
       currentOffset--; render();
     }
   }
-  // écouteurs globaux (fonctionne partout)
   window.addEventListener('touchstart', handleStart, {passive:true});
   window.addEventListener('touchend', handleEnd,   {passive:true});
   window.addEventListener('pointerdown', handleStart, {passive:true});
