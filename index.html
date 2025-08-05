@@ -22,6 +22,8 @@
     body{
       margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       background:var(--bg);position:relative;overflow-y:scroll;
+      /* permet les gestes globaux */
+      touch-action:pan-y;
     }
     /* Fond d’écran (rose) atténué */
     body::before{
@@ -40,11 +42,8 @@
     .calendar{
       background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
       box-shadow:var(--shadow); padding:12px;
-      touch-action:pan-y; /* pour swiper horizontalement sans bloquer le scroll vertical */
     }
-    .top-rows{
-      display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px
-    }
+    .top-rows{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
     .controls{display:flex;flex-wrap:wrap;gap:8px}
     .legend{display:flex;align-items:center;gap:10px}
     .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
@@ -53,9 +52,9 @@
 
     .btn{
       background:var(--glass); border:1px solid var(--border); color:var(--text);
-      border-radius:12px; padding:8px 12px; box-shadow:var(--shadow); cursor:pointer
+      border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); cursor:pointer
     }
-    .btn.small{padding:6px 10px}
+    .btn.small{padding:8px 12px}
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .btn:active{transform:translateY(1px)}
 
@@ -74,16 +73,26 @@
     .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
     .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
 
-    /* BARRE DU BAS = navigation centrée */
+    /* BARRE DU BAS = nav centrée, flèches fixes */
     .footer{
-      position:fixed;left:0;right:0;bottom:0;padding:10px;border-top:1px solid var(--border);
-      backdrop-filter:blur(8px);background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
+      position:fixed;left:0;right:0;bottom:0;
+      padding:14px 12px; /* plus haute */
+      min-height:84px;   /* hauteur augmentée */
+      border-top:1px solid var(--border);
+      backdrop-filter:blur(8px);
+      background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
       display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
     }
-    .nav-group{display:flex;align-items:center;gap:8px;justify-self:center}
+    .nav-group{
+      /* 3 colonnes : flèche gauche (fixe), libellé au centre (largeur bornée), flèche droite (fixe) */
+      display:grid;grid-template-columns:56px minmax(180px, 60vw) 56px;align-items:center;justify-items:center;
+      justify-self:center;
+    }
     .month-btn{
+      width:100%;
       margin:0;border:none;background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;
-      padding:4px 10px;border-radius:10px;line-height:1;text-transform:capitalize;
+      padding:6px 10px;border-radius:10px;line-height:1;text-transform:capitalize;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
     }
     .month-btn:hover{background:rgba(255,255,255,.06)}
     .month-btn:active{transform:translateY(1px)}
@@ -134,7 +143,7 @@
     <div class="mp-list" id="mpList"></div>
   </dialog>
 
-  <!-- Barre du bas : nav centrée -->
+  <!-- Barre du bas : nav centrée & flèches fixes -->
   <div class="footer">
     <div></div>
     <div class="nav-group">
@@ -157,7 +166,7 @@
   function weeksBetween(a,b){ return Math.round((mondayOf(b)-mondayOf(a))/(7*86400000)); }
 
   // ---------- State ----------
-  const STORAGE_KEY='garde-calendar.v5';
+  const STORAGE_KEY='garde-calendar.v6';
   const defaultState = ()=>{
     const today = new Date();
     return { baselineMondayISO: ymd(mondayOf(today)), baselineOwner: 'jiajia', dayOverrides: {} };
@@ -181,7 +190,6 @@
   const grid = document.getElementById('grid');
   const weekdaysEl = document.getElementById('weekdays');
   const monthLabelEl = document.getElementById('monthLabel');
-  const calendarEl = document.getElementById('calendar');
 
   const dayNames = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
   weekdaysEl.innerHTML = dayNames.map(n=>`<div style="text-align:center">${n}</div>`).join('');
@@ -200,8 +208,7 @@
     const monthStartUTC = toUTCDate(m);
     const monthEndUTC = toUTCDate(new Date(m.getFullYear(), m.getMonth()+1, 0));
 
-    const label = fmtMonth.format(m);
-    monthLabelEl.textContent = label;
+    monthLabelEl.textContent = fmtMonth.format(m);
 
     // semaines nécessaires uniquement
     const firstMonday = mondayOf(monthStartUTC);
@@ -237,7 +244,6 @@
       grid.appendChild(cell);
     }
 
-    // rafraîchir la sélection dans le picker si ouvert
     refreshMonthPickerSelection();
   }
 
@@ -291,34 +297,39 @@
     if(!inDialog) monthPicker.close();
   });
 
-  // ---------- Swipe (gauche/droite pour changer de mois) ----------
-  let touchStartX=null, touchStartY=null, touchStartTime=0;
+  // ---------- Swipe global (n'importe où sur l'écran) ----------
+  let startX=null, startY=null, startTime=0;
   const SWIPE_MIN_X = 50;   // px
   const SWIPE_MAX_Y = 60;   // tolérance verticale
-  const SWIPE_MAX_MS = 600; // timing optionnel
+  const SWIPE_MAX_MS = 600; // timing max
 
-  function onTouchStart(e){
+  function handleStart(e){
     const t = e.touches ? e.touches[0] : e;
-    touchStartX = t.clientX; touchStartY = t.clientY; touchStartTime = Date.now();
+    startX = t.clientX; startY = t.clientY; startTime = Date.now();
   }
-  function onTouchEnd(e){
-    if(touchStartX===null) return;
+  function handleEnd(e){
+    if(startX===null) return;
     const t = e.changedTouches ? e.changedTouches[0] : e;
-    const dx = t.clientX - touchStartX;
-    const dy = Math.abs(t.clientY - touchStartY);
-    const dt = Date.now() - touchStartTime;
-    touchStartX = null;
+    const dx = t.clientX - startX;
+    const dy = Math.abs(t.clientY - startY);
+    const dt = Date.now() - startTime;
+    startX = null;
+
+    // ignorer si le picker de mois est ouvert
+    if (document.getElementById('monthPicker').open) return;
 
     if(dy > SWIPE_MAX_Y || dt > SWIPE_MAX_MS) return; // pas un swipe horizontal
-    if(dx <= -SWIPE_MIN_X && currentOffset < monthsAhead){ // vers la gauche => mois suivant
+    if(dx <= -SWIPE_MIN_X && currentOffset < monthsAhead){ // gauche -> suivant
       currentOffset++; render();
-    }else if(dx >= SWIPE_MIN_X && currentOffset > 0){      // vers la droite => mois précédent
+    }else if(dx >= SWIPE_MIN_X && currentOffset > 0){      // droite -> précédent
       currentOffset--; render();
     }
   }
-  // On capte les gestes sur la carte + sur le body (au cas où)
-  ['touchstart','pointerdown','mousedown'].forEach(ev=>calendarEl.addEventListener(ev, onTouchStart, {passive:true}));
-  ['touchend','pointerup','mouseup'].forEach(ev=>calendarEl.addEventListener(ev, onTouchEnd, {passive:true}));
+  // écouteurs globaux (fonctionne partout)
+  window.addEventListener('touchstart', handleStart, {passive:true});
+  window.addEventListener('touchend', handleEnd,   {passive:true});
+  window.addEventListener('pointerdown', handleStart, {passive:true});
+  window.addEventListener('pointerup',   handleEnd,   {passive:true});
 
   // ---------- PWA ----------
   let deferredPrompt=null;
