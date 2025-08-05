@@ -16,12 +16,10 @@
     --j:#ec4899; --s:#8b5cf6;
     --card:rgba(17,24,39,.82); --glass:rgba(255,255,255,.06);
     --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px;
-
-    /* nouveaux espacements */
-    --day-col-gap: 6px;     /* écart horizontal entre jours */
-    --week-row-gap: 14px;   /* écart vertical entre semaines */
   }
   *{box-sizing:border-box}
+  /* supprime l'effet de surbrillance au tap sur mobile */
+  *{ -webkit-tap-highlight-color: transparent; }
   html,body{height:100%}
   body{
     margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
@@ -58,29 +56,29 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn:active{transform:translateY(1px)}
 
+  /* Anti-sélection / anti-callout pour tous les boutons & éléments cliquables */
+  button, .btn, .month-btn, .chip, .mp-item {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none; /* iOS: pas de menu au long-press */
+  }
+  /* si des images se trouvent dans des boutons, on évite de les sélectionner/drag */
+  button img, .btn img { user-select: none; -webkit-user-drag: none; pointer-events: none; }
+
   /* 月份标题（放在日期上方） */
   .month-inline{
     text-align:center;font-weight:800;font-size:18px;margin:2px 0 8px;
     text-transform:none;
   }
 
-  /* 星期标题（与下方网格对齐） — écart H seulement */
+  /* 星期标题（与下方网格对齐） */
   .weekdays{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    column-gap: var(--day-col-gap);
-    margin:6px 0 10px;
+    display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;
     color:var(--muted);font-size:13px;font-weight:700;text-align:center;
   }
 
-  /* Grille jours — écart H + espace V entre semaines */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    column-gap: var(--day-col-gap);
-    row-gap: var(--week-row-gap);
-  }
-
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
   .cell{
     aspect-ratio:1/1;background:var(--glass);border:1px solid var(--border);border-radius:14px;
     display:flex;align-items:center;justify-content:center;position:relative;user-select:none;cursor:pointer;
@@ -128,6 +126,7 @@
   .mp-item:hover{background:rgba(255,255,255,.06)}
   .mp-item.selected{outline:2px solid rgba(236,72,153,.5); background:rgba(236,72,153,.10)}
 </style>
+
 
 </head>
 <body>
