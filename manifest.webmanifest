@@ -1,0 +1,17 @@
+{
+  "name": "Garde – Jiajia / Sœur",
+  "short_name": "Garde",
+  "id": "/",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#111827",
+  "lang": "fr",
+  "description": "Calendrier Jiajia/Sœur : alternance hebdo, toggle par jour, inversion A/B. Mois affiché avec seulement les semaines nécessaires.",
+  "icons": [
+    { "src": "icons/icon.svg",     "sizes": "any",     "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png",     "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "any maskable" }
+  ]
+}

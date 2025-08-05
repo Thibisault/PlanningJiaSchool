@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Garde – Jiajia / Sœur</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#111827">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+
+  <style>
+    :root{
+      --bg:#0f172a; --text:#f5f5f5; --muted:#cbd5e1; --border:rgba(255,255,255,.14);
+      --j:#ec4899; --s:#8b5cf6;
+      --card:rgba(17,24,39,.82); --glass:rgba(255,255,255,.06);
+      --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:var(--bg);position:relative;overflow-y:scroll;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;
+      background:
+        linear-gradient(180deg, rgba(236,72,153,.25), rgba(139,92,246,.25)),
+        url("icons/fond.jpg") center/cover no-repeat fixed;
+      filter:saturate(1.05);opacity:.55;z-index:-2;
+    }
+    body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.30));z-index:-1}
+
+    header{
+      position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
+      background:linear-gradient(180deg, rgba(17,24,39,.95), rgba(17,24,39,.70));
+      border-bottom:1px solid var(--border); padding:10px 12px;
+    }
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .month-nav{display:flex;align-items:center;gap:8px}
+    .btn{
+      background:var(--glass); border:1px solid var(--border); color:var(--text);
+      border-radius:12px; padding:8px 12px; box-shadow:var(--shadow); cursor:pointer
+    }
+    .btn.small{padding:6px 10px}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn:active{transform:translateY(1px)}
+    .legend{display:flex;align-items:center;gap:10px}
+    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;background:var(--glass)}
+    .dot{width:10px;height:10px;border-radius:999px}
+    .dot.j{background:var(--j)} .dot.s{background:var(--s)}
+
+    /* Bouton mois cliquable */
+    .month-btn{
+      margin:0;border:none;background:transparent;color:var(--text);font-size:20px;font-weight:700;cursor:pointer;
+      padding:4px 10px;border-radius:10px;line-height:1;
+    }
+    .month-btn:hover{background:rgba(255,255,255,.06)}
+    .month-btn:active{transform:translateY(1px)}
+
+    .container{max-width:880px;margin:0 auto;padding:16px 16px 120px}
+
+    .calendar{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px;}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .cal-title{font-weight:700;font-size:18px}
+
+    .weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 10px;color:var(--muted);font-size:13px;font-weight:600;text-align:center;text-transform:capitalize}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .cell{
+      aspect-ratio:1/1;background:var(--glass);border:1px solid var(--border);border-radius:14px;
+      display:flex;align-items:center;justify-content:center;position:relative;user-select:none;cursor:pointer;
+      transition:transform .05s ease, outline-color .2s, background-color .2s;outline:2px solid transparent;
+    }
+    .cell:active{ transform:scale(.985) }
+    .cell.out{ opacity:.45 }
+    .num{ position:relative; z-index:2; font-weight:700; }
+    .badge{ position:absolute; inset:4px; border-radius:12px; background:transparent; z-index:1; transition:background-color .2s, box-shadow .2s }
+    .j .badge{ background:rgba(236,72,153,.18); box-shadow:0 0 0 2px rgba(236,72,153,.45) inset }
+    .s .badge{ background:rgba(139,92,246,.18); box-shadow:0 0 0 2px rgba(139,92,246,.45) inset }
+
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+
+    /* Picker de mois (dialog) */
+    dialog#monthPicker{
+      border:none;border-radius:16px;padding:0;max-width:min(440px,96vw);width:100%;
+      background:var(--card);color:var(--text);box-shadow:var(--shadow);overflow:hidden;
+    }
+    dialog#monthPicker::backdrop{background:rgba(0,0,0,.6)}
+    .mp-head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)}
+    .mp-title{font-weight:700}
+    .mp-list{max-height:60vh;overflow:auto}
+    .mp-item{
+      width:100%;text-align:left;background:transparent;border:none;color:var(--text);
+      padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;
+    }
+    .mp-item:hover{background:rgba(255,255,255,.06)}
+    .mp-item.selected{outline:2px solid rgba(236,72,153,.5); background:rgba(236,72,153,.10)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="toolbar">
+      <div class="month-nav">
+        <button class="btn small" id="prevMonth" aria-label="Mois précédent">◀</button>
+        <button class="month-btn" id="monthLabel" aria-haspopup="dialog" aria-controls="monthPicker" title="Choisir un mois"></button>
+        <button class="btn small" id="nextMonth" aria-label="Mois suivant">▶</button>
+      </div>
+      <div class="legend">
+        <span class="chip"><span class="dot j"></span>Jiajia</span>
+        <span class="chip"><span class="dot s"></span>Sœur</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="calendar">
+      <div class="cal-head">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="controls">
+          <button class="btn" id="invertAB">Inverser A/B (réinitialise)</button>
+          <button class="btn" id="resetBtn">Réinitialiser modifs</button>
+        </div>
+      </div>
+
+      <div class="weekdays" id="weekdays"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <!-- Picker de mois -->
+  <dialog id="monthPicker">
+    <div class="mp-head">
+      <div class="mp-title">Aller au mois…</div>
+      <button class="btn small" id="mpClose">Fermer</button>
+    </div>
+    <div class="mp-list" id="mpList"></div>
+  </dialog>
+
+  <div class="footer" style="position:fixed;left:0;right:0;bottom:0;padding:10px;display:flex;gap:8px;justify-content:center;border-top:1px solid var(--border);backdrop-filter:blur(8px);background:linear-gradient(0deg, rgba(17,24,39,.95), rgba(17,24,39,.70))">
+    <button class="btn" id="todayBtn">Aller au mois courant</button>
+    <button class="btn" id="installBtn" hidden>Installer</button>
+  </div>
+
+  <script>
+  // ---------- Dates (UTC) ----------
+  const fmtMonth = new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'});
+  const toUTCDate = (d)=> new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const ymd = (d)=> `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  const fromYMD = (s)=>{ const [y,m,d]=s.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)); }
+  function mondayOf(date){ const d=toUTCDate(date); const wd=d.getUTCDay(); const diff=(wd===0?-6:1-wd); d.setUTCDate(d.getUTCDate()+diff); d.setUTCHours(0,0,0,0); return d; }
+  function sundayOf(date){ const m=mondayOf(date); const s=new Date(m); s.setUTCDate(m.getUTCDate()+6); return s; }
+  function addDaysUTC(d,days){ const n=new Date(d); n.setUTCDate(n.getUTCDate()+days); return n; }
+  function weeksBetween(a,b){ return Math.round((mondayOf(b)-mondayOf(a))/(7*86400000)); }
+
+  // ---------- State ----------
+  const STORAGE_KEY='garde-calendar.v4';
+  const defaultState = ()=>{
+    const today = new Date();
+    return { baselineMondayISO: ymd(mondayOf(today)), baselineOwner: 'jiajia', dayOverrides: {} };
+  };
+  function load(){ try{ const raw=localStorage.getItem(STORAGE_KEY); return raw? {...defaultState(), ...JSON.parse(raw)} : defaultState(); }catch{ return defaultState(); } }
+  let state = load();
+  const save = ()=> localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  function baseOwnerForDate(date){
+    const base = fromYMD(state.baselineMondayISO);
+    const w = weeksBetween(base, date);
+    const isEven = (w % 2 === 0);
+    return isEven ? state.baselineOwner : (state.baselineOwner==='jiajia'?'soeur':'jiajia');
+  }
+  function ownerForDate(date){
+    const k = ymd(toUTCDate(date));
+    return state.dayOverrides[k] || baseOwnerForDate(date);
+  }
+
+  // ---------- Rendu du mois ----------
+  const monthLabelEl = document.getElementById('monthLabel');
+  const calTitle = document.getElementById('calTitle');
+  const grid = document.getElementById('grid');
+  const weekdaysEl = document.getElementById('weekdays');
+
+  const dayNames = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+  weekdaysEl.innerHTML = dayNames.map(n=>`<div style="text-align:center">${n}</div>`).join('');
+
+  const today = new Date();
+  const startMonth = new Date(today.getFullYear(), today.getMonth(), 1); // mois courant
+  const monthsAhead = 12; // 0..12
+  let currentOffset = 0;
+
+  function render(){
+    // borne navigation
+    document.getElementById('prevMonth').disabled = currentOffset<=0;
+    document.getElementById('nextMonth').disabled = currentOffset>=monthsAhead;
+
+    const m = new Date(startMonth.getFullYear(), startMonth.getMonth()+currentOffset, 1);
+    const monthStartUTC = toUTCDate(m);
+    const monthEndUTC = toUTCDate(new Date(m.getFullYear(), m.getMonth()+1, 0));
+
+    const label = fmtMonth.format(m);
+    monthLabelEl.textContent = label;
+    calTitle.textContent = label;
+
+    // semaines nécessaires uniquement
+    const firstMonday = mondayOf(monthStartUTC);
+    const lastSunday  = sundayOf(monthEndUTC);
+    const totalDays = Math.round((lastSunday - firstMonday)/86400000) + 1; // multiple de 7
+    grid.innerHTML='';
+
+    for(let i=0;i<totalDays;i++){
+      const d = addDaysUTC(firstMonday, i);
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+
+      // hors du mois ⇒ atténué
+      const out = d < monthStartUTC || d > monthEndUTC;
+      if(out) cell.classList.add('out');
+
+      const owner = ownerForDate(d);
+      cell.classList.add(owner==='jiajia' ? 'j' : 's');
+
+      const badge = document.createElement('div'); badge.className='badge';
+      const num = document.createElement('div'); num.className='num'; num.textContent = d.getUTCDate();
+      cell.appendChild(badge); cell.appendChild(num);
+
+      cell.addEventListener('click', ()=>{
+        const k = ymd(d);
+        const cur = ownerForDate(d);
+        const next = (cur==='jiajia') ? 'soeur' : 'jiajia';
+        state.dayOverrides[k] = next;
+        if(state.dayOverrides[k] === baseOwnerForDate(d)){ delete state.dayOverrides[k]; }
+        save(); render();
+      });
+
+      grid.appendChild(cell);
+    }
+
+    // rafraîchir la sélection dans le picker si ouvert
+    refreshMonthPickerSelection();
+  }
+
+  // ---------- Navigation flèches ----------
+  document.getElementById('prevMonth').onclick = ()=>{ if(currentOffset>0){ currentOffset--; render(); } };
+  document.getElementById('nextMonth').onclick = ()=>{ if(currentOffset<monthsAhead){ currentOffset++; render(); } };
+  document.getElementById('todayBtn').onclick = ()=>{ currentOffset = 0; render(); };
+
+  // ---------- Inverser / Reset ----------
+  document.getElementById('invertAB').onclick = ()=>{
+    if(!confirm("Inverser l'alternance A/B et effacer toutes les modifications manuelles ?")) return;
+    state.baselineOwner = (state.baselineOwner==='jiajia') ? 'soeur' : 'jiajia';
+    state.dayOverrides = {}; save(); render();
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if(!confirm("Effacer toutes les modifications manuelles (jours) ?")) return;
+    state.dayOverrides = {}; save(); render();
+  };
+
+  // ---------- Picker de mois ----------
+  const monthPicker = document.getElementById('monthPicker');
+  const mpList = document.getElementById('mpList');
+  const mpClose = document.getElementById('mpClose');
+
+  function buildMonthPicker(){
+    mpList.innerHTML = '';
+    for(let i=0;i<=monthsAhead;i++){
+      const date = new Date(startMonth.getFullYear(), startMonth.getMonth()+i, 1);
+      const btn = document.createElement('button');
+      btn.className = 'mp-item';
+      btn.dataset.offset = i;
+      btn.textContent = fmtMonth.format(date);
+      btn.addEventListener('click', ()=>{
+        currentOffset = i; monthPicker.close(); render();
+      });
+      mpList.appendChild(btn);
+    }
+    refreshMonthPickerSelection();
+  }
+  function refreshMonthPickerSelection(){
+    const items = mpList.querySelectorAll('.mp-item');
+    items.forEach(it => it.classList.toggle('selected', Number(it.dataset.offset)===currentOffset));
+  }
+
+  // Ouvrir au clic sur le mois
+  monthLabelEl.addEventListener('click', ()=>{
+    buildMonthPicker();
+    monthPicker.showModal();
+  });
+  mpClose.addEventListener('click', ()=> monthPicker.close());
+  monthPicker.addEventListener('click', (e)=>{
+    // fermer si clic hors carte
+    const rect = monthPicker.getBoundingClientRect();
+    const inDialog = (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
+    if(!inDialog) monthPicker.close();
+  });
+
+  // ---------- PWA ----------
+  let deferredPrompt=null;
+  const installBtn=document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt',(e)=>{
+    e.preventDefault(); deferredPrompt = e; installBtn.hidden=false;
+  });
+  installBtn.addEventListener('click', async ()=>{
+    if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; installBtn.hidden=true;
+  });
+  if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('./sw.js')); }
+
+  render();
+  </script>
+</body>
+</html>
